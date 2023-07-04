@@ -1,15 +1,14 @@
 name: min_max_heap
-description: A starting point for Dart libraries or applications.
+description: A MinMax binary heap data structure implementation.
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/ElanDeyan/min_max_heap_dart
 
 environment:
-  sdk: ^3.1.0-111.0.dev
+  sdk: ^3.0.5
 
 # Add regular dependencies here.
-dependencies:
-  logging: ^1.2.0
-  # math
+# dependencies:
+
 
 dev_dependencies:
   lint: ^2.1.2

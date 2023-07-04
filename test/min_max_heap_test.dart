@@ -11,7 +11,7 @@ void main() {
         myFirstIntHeap.insert(testCase);
       }
       myFirstIntHeap.printTree();
-      expect(myFirstIntHeap.toList, expectResult);
+      expect(myFirstIntHeap, expectResult);
     });
   });
 }

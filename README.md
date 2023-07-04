@@ -11,25 +11,62 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+# MinMax heap in Dart
 
-This package implement a Min Max binary heap data structure. A priority queue with quick access to min or max element.
+A binary heap, or priority queue, with quick access to min and max elements class.
+> Dart 3.0.5 or higher required
+
+## Dependencies
+
+```dart
+// This package uses internally the following:
+import 'dart:math' show pow; // Inside min_max_heap.dart
+import 'dart:math' show log; // Inside min_max_heap_base.dart
+```
 
 ## Features
 
-This package can help if you want a priority queue when the access to min  or max priority is required.
-This implementation uses generics, and you can set a callback with num type return to adjust the heap.
+- [x] Dart 3.0 compatible
+- [x] Supports generics and custom callback criteria
+- [x] Generates the heap in a iterable or list form.
+- [x] Insert, Remove (min and max), Get (min and max) operations
+- [x] [index] operator for access supported!
 
 ## Getting started
 
-TODO: List prerequisites and provide or point to information on how to
-start using the package.
+### Concept
+
+#### Binary heap (in general)
+A binary heap is a data structure with 2 properties:
+
+* Heap shape: The heap will have all levels, except the last one, fullfilled with max number of elements possible in this level. For example, see the image below:
+
+![A binary min-heap representation, your array mode is: [1,2,3,17,19,36,7,25,100]](https://upload.wikimedia.org/wikipedia/commons/thumb/6/69/Min-heap.png/220px-Min-heap.png)
+  * As you can see, the first's 3 levels have all number of nodes possible in the respective level (`pow(base: 2,exponent: level)`):
+    * Level 0: 1 node
+    * Level 1: 2 nodes
+    * Level 2: 4 nodes
+    * ...
+
+* In a traditional min-heap, all nodes that have descendants should be less than all your respective descendants. The image above explains for yourself.
+
+An interest thing about binary heaps in general is the fact they can be implemented in a List of values, not necessary linked nodes.
+**This implementation uses 'list/array'.**
+
+#### MinMax heap
+
+If you try to find the maximum value in a min-heap, you will have O(lg n) in worst case. The same with find minimum value in a max-heap.
+With MinMax heap, you have O(1) in the worst case to find both min and max value of all heap.
+Operations like insert, remove (min and max) have O(lg n) in worst case. And the build method (when you pass a List<T> values in the input parameter) have O(n lg n) in worst case.
+Here an image to illustrate a valid MinMax heap:
+
+![MinMax heap, the array mode is [8,71,41,31,10,11,16,46,51,31,21,13]](https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Min-max_heap.jpg/300px-Min-max_heap.jpg)
+
+As you see, the min will always be the root, and the max will be or the direct left child or the direct right child of the root.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder. 
+You can build a heap from a List<T> values in input parameter.
 
 ```dart
 void main() {
@@ -37,8 +74,43 @@ void main() {
 }
 ```
 
+Or, you can build with successive insertions.
+
+```dart
+void main() {
+  List<int> myInput = [1,2,3,4,5,6,7,8];
+  final MinMaxHeap<int> myIntHeap = MinMaxHeap();
+  for(final element in myInput) {
+    myIntHeap.insert(element);
+  }
+}
+```
+
+Other aspect to consider is the use of the criteria parameter.
+If you want to build your MinMax heap with custom criteria, you need to pass a callback funtion that returns `num` or `int` or `double` types.
+Else will throw an Error.
+
+```dart
+void main() {
+  List<String> myInput = ['hello', 'my', 'name', 'is', 'Elan', 'and', 'your', 'name', '?'];
+  final MinMaxHeap<String> myStringHeap = MinMaxHeap(input: myInput, criteria: (word) => word.length);
+}
+```
+
+You can use sucessive insertions with callbacks too.
+
+```dart
+void main() {
+  List<String> myInput = ['hello', 'my', 'name', 'is', 'Elan', 'and', 'your', 'name', '?'];
+  final MinMaxHeap<String> myStringHeap = MinMaxHeap(criteria: (word) => word.length);
+  for(final element in myInput) {
+    myStringHeap.insert(element);
+  }
+}
+```
+
+> **Curiosity**: If you use the same List of elements, but build one heap passing the input parameter and build other heap with the sme input, but with sucessive insertions, the results heaps can be different! But both are valid ones. Test and see!
+
 ## Additional information
 
-TODO: Tell users more about the package: where to find more information, how to 
-contribute to the package, how to file issues, what response they can expect 
-from the package authors, and more.
+This package can be improved and tips are welcome! You can create an issue in Github's repository.
