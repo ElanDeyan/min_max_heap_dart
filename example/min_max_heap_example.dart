@@ -26,6 +26,7 @@ void main(List<String> args) {
     input: [1.3, 4.7, 3.8, 19.4, 29.34, -5.3, 14],
     criteria: (element) => element / 2,
   );
+  // The callback doesn't change the values, the result is used only to make comparisons.
   print('Double heap with criteria callback');
   print('Removing the max: ${myDoubleHeap.removeMax()}'); // 29.34;
   print('Removing the max: ${myDoubleHeap.removeMax()}'); // 19.4;

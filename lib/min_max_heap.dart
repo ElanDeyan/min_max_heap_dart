@@ -2,10 +2,14 @@
 library min_max_heap;
 
 import 'dart:math' show pow;
+import 'package:logging/logging.dart';
 
 import 'package:min_max_heap/src/min_max_heap_base.dart';
 
-/// A priority queue of `T` type.
+/// A double-ended priority queue of `E` type.
+/// 
+/// Suggestion: When import this class, give the alias 'PriorityDeque'.
+/// 
 /// MinMax heap is a traditional binary heap, a 'double-ended priority queue',
 /// a priority queue where the elements are organized following the 2 properties of a binary heap:
 /// 1. Heap shape: All levels, except the last one, are fullfilleds with max elements on the respective level.
@@ -13,7 +17,7 @@ import 'package:min_max_heap/src/min_max_heap_base.dart';
 /// less than all of his descendants (in your subtree), and in the max level, the max one in all of his descendants (in your subtree).
 ///
 /// The getters `min` and `max` have complexity O(1), and insertion, delete (in both extremes, min or max),
-/// have O(lgn)
+/// have O(lg n)
 ///
 /// This implementation supports generics, so you can store elements with any data type or class,
 /// since you follow the rules:
@@ -22,76 +26,112 @@ import 'package:min_max_heap/src/min_max_heap_base.dart';
 ///
 /// The heap will be balanced accordingly your content, if has num type and callback is null,
 /// or based on the callback's result on the content.
-class MinMaxHeap<T extends Object> {
-  /// Internal storage of the heap.
-  final List<T> _heapStorage;
+class MinMaxHeap<E extends Object> {
+  /// Build a min-max heap, a double-ended priority queue.
+  /// If [criteria] is equal to null, the content type of your list should be a `num`, like `int` or `double`.
+  /// Otherwise, your [criteria] callback function should return a `num` type.
+  /// The heap will adjust based on this callback applyied on the element.
+  MinMaxHeap({
+    num Function(E element)? criteria,
+  })  : _callback = criteria,
+        _isContentCriteria = criteria == null,
+        _heapStorage = <E>[];
 
-  /// Callback function which will be applyied on the element.
-  /// Can be null since you maybe want to build your heap based on the content.
-  final num Function(T element)? _callback;
-
-  /// Returns heap length, the number of elements present in the heap.
-  int get length => _heapStorage.length;
-
-  /// Returns the index of the last one.
-  Idx get _last => length - 1;
-
-  /// Returns the heap like a `Iterable<T>`. Perfect to loop through.
-  Iterable<T> get iterable => _heapStorage.map((e) => e);
-
-  /// Heap with list shape.
-  List<T> get listMode => [for (final element in _heapStorage) element];
-
-  /// Root's index.
-  Idx get _root => 0;
-
-  /// Access operator for the heap in List mode
-  T operator [](int index) {
-    return listMode[index];
+  /// Build a min-max heap, a double-ended priority queue, from an [iterable].
+  /// If [criteria] is equal to null, the content type of your list should be a `num`, like `int` or `double`.
+  /// Otherwise, your [criteria] callback function should return a `num` type.
+  /// The heap will adjust based on this callback applyied on the element.
+  factory MinMaxHeap.fromIterable({
+    required Iterable<E> iterable,
+    num Function(E element)? criteria,
+  }) {
+    final isContentCriteria = criteria == null;
+    if (isContentCriteria && !isNumericalType(iterable)) {
+      throw ArgumentError.value(
+        iterable,
+        null,
+        "If you want a content criteria, send a iterable of num's.",
+      );
+    } else {
+      final newHeap = MinMaxHeap(criteria: criteria);
+      newHeap.enqueueAll(iterable);
+      return newHeap;
+    }
   }
 
-  /// Deepest level of the heap.
-  int get depth => length.logBase2.floor();
+  /// Internal storage of the heap. Stored as a [List].
+  List<E> _heapStorage;
 
-  /// Criteria defined.
-  final Criteria _criteria;
+  /// Callback function which will be applyied on the element.
+  /// Can be null if you want to build your heap based on the numerical content.
+  /// Internally, the class will call this function to compare the result between two
+  /// values and, accordingly, organize the [_heapStorage].
+  final num Function(E element)? _callback;
 
-  /// Helper method to find father's node index.
-  Idx _parentOf({required Idx index}) => ((index - 1) / 2).floor();
+  /// Returns heap [length], the number of elements present in the [_heapStorage].
+  int get length => _heapStorage.length;
 
-  /// Helper methos to find grandparent's node index.
-  Idx _grandParentOf({required Idx index}) =>
-      _parentOf(index: _parentOf(index: index));
+  /// Check when the [_heapStorage] is empty.
+  bool get isEmpty => _heapStorage.isEmpty;
 
-  /// Get the level type based on index. Can be a Min level or Max level.
-  HeapLevel _levelTypeOf({required Idx index}) =>
-      (index + 1).logBase2.floor().isEven ? HeapLevel.min : HeapLevel.max;
+  /// Check when the [_heapStorage] is not empty.
+  bool get isNotEmpty => _heapStorage.isNotEmpty;
 
-  /// You can build the heap in many ways:
-  /// 1. Passing a [input] `List<T>`.
-  ///
-  /// 1.1 If [criteria] is equal to null, the content type of your list should be a `num`, like `int` or `double`.
-  ///
-  /// 1.2 Otherwise, your [criteria] callback function should return a `num` type. The heap will balance based on this callback on the element.
-  ///
-  /// 2. You can omit the [input] parameter, and build your heap with the `insert` method,
-  /// but you need to follow the criteria above, if your type is `num`, you can omit the [criteria], otherwise, you need to pass
-  /// a callback with return type equal to `num`.
-  MinMaxHeap({List<T>? input, num Function(T element)? criteria})
-      : _heapStorage = input?.map((e) => e).toList() ?? [],
-        _callback = criteria,
-        _criteria = criteria != null ? Criteria.callback : Criteria.content {
-    if (_heapStorage.isNotEmpty) {
-      if (_callback == null && !(T is! num || T is! int || T is! double)) {
-        throw ArgumentError('Content isnt a num type');
-      } else {
-        for (Idx i = _parentOf(index: _last); i >= _root; i--) {
-          _trickleDown(index: i);
-        }
+  /// Index of the last element in [_heapStorage].
+  Idx get _last => length - 1;
+
+  /// Index of the last element with a child.
+  Idx get _lastFather => (length - 1) ~/ 2;
+
+  /// A lazy iterable of the heap in [Iterable] shape. Perfect to loop through.
+  Iterable<E> get iterable sync* {
+    for (final element in _heapStorage) {
+      yield element;
+    }
+  }
+
+  /// Elements in [List] shape. To view the elements by level, see [logTree] or [asMapOfLevels].
+  List<E> get asList => iterable.toList();
+
+  /// Return a lazy iterable of the heap in decreasing or ascending order.
+  /// Default [isAscendingOrder].
+  Iterable<E> sortedView({bool isAscendingOrder = true}) sync* {
+    if (isAscendingOrder) {
+      while (isNotEmpty) {
+        yield dequeueMin;
+      }
+    } else {
+      while (isNotEmpty) {
+        yield dequeueMax;
       }
     }
   }
 
+  /// Root's index.
+  Idx get _root => 0;
+
+  /// Deepest level of the heap.
+  int get depth => length.logBase2.floor();
+
+  /// Criteria defined. Based on the content or [_callback].
+  final bool _isContentCriteria;
+
+  /// Helper method to find father's node by [index].
+  Idx _parentOf({required Idx index}) => ((index - 1) / 2).floor();
+
+  /// Helper method to find grandparent's node by [index].
+  Idx _grandParentOf({required Idx index}) => _parentOf(
+        index: _parentOf(
+          index: index,
+        ),
+      );
+
+  /// Helper method to get the level type based on [index].
+  /// Can be a Min level or Max level.
+  HeapLevel _levelTypeOf({required Idx index}) =>
+      (index + 1).logBase2.floor().isEven ? HeapLevel.min : HeapLevel.max;
+
+  /// Checks the [_levelTypeOf] of [index] and calls [_trickleDownMin] or [_trickleDownMax], based on the level.
   void _trickleDown({required Idx index}) {
     if (_levelTypeOf(index: index) == HeapLevel.min) {
       _trickleDownMin(index: index);
@@ -100,6 +140,12 @@ class MinMaxHeap<T extends Object> {
     }
   }
 
+  /// AKA percolate down, will get the smallest children or grandchildren of [index] in min level
+  /// and checks if is child or not.
+  ///
+  /// After, will make comparisons to correct the heap condition, make the nodes
+  /// at min levels be the minimum ones of his own subtree, and max level nodes,
+  /// the max of his subtree.
   void _trickleDownMin({required Idx index}) {
     final Idx lastChild = 2 * index + 2;
     if (index <= _parentOf(index: _last)) {
@@ -130,6 +176,12 @@ class MinMaxHeap<T extends Object> {
     }
   }
 
+  /// AKA percolate down, will get the smallest children or grandchildren
+  /// of [index] in max level and checks if is child or not.
+  ///
+  /// After, will make comparisons to correct the heap condition, make the nodes
+  /// at min levels be the minimum ones of his own subtree, and max level nodes,
+  /// the max of his subtree.
   void _trickleDownMax({required Idx index}) {
     final Idx lastChild = 2 * index + 2;
     if (index <= _parentOf(index: _last)) {
@@ -160,6 +212,9 @@ class MinMaxHeap<T extends Object> {
     }
   }
 
+  /// Litteraly bubble up the node to his correct place,
+  /// respecting the heap condition.
+  /// Essential in [insert] and [enqueue] methods.
   void _bubbleUp({required Idx index}) {
     if (_levelTypeOf(index: index) == HeapLevel.min) {
       if (_parentOf(index: index) >= _root) {
@@ -182,6 +237,7 @@ class MinMaxHeap<T extends Object> {
     }
   }
 
+  /// Correct cases when a node at [index] is less than his grandparent.
   void _bubbleUpMin({required Idx index}) {
     if (_grandParentOf(index: index) >= _root) {
       if (_getValue(index: index) <
@@ -192,6 +248,7 @@ class MinMaxHeap<T extends Object> {
     }
   }
 
+  /// Correct cases when a node at [index] is higher than his grandparent.
   void _bubbleUpMax({required Idx index}) {
     if (_grandParentOf(index: index) >= _root) {
       if (_getValue(index: index) >
@@ -204,13 +261,13 @@ class MinMaxHeap<T extends Object> {
 
   /// Swap the values presents on the respectives indexes.
   void _swap({required Idx first, required Idx second}) {
-    final T temp = _heapStorage[first];
+    final E temp = _heapStorage[first];
     _heapStorage[first] = _heapStorage[second];
     _heapStorage[second] = temp;
   }
 
-  /// Children and Grandchildren indexes, even if
-  /// doesn't exists.
+  /// Helper method to get the children and grandchildren indexes, given an [index], even if
+  /// doesn't have children or grandchildren.
   /// The `where` method will filter them.
   Iterable<Idx> _descendantsOf({required Idx index}) {
     final Iterable<Idx> descendants = [
@@ -221,32 +278,66 @@ class MinMaxHeap<T extends Object> {
       4 * index + 5,
       4 * index + 6,
     ];
-
     return descendants.where((i) => i <= _last);
   }
 
+  /// Check the criteria chased by user in [_callback] value,
+  /// being `null` or not, and gets the value at [index].
+  ///
+  /// If the content is a non numerical type, this method will use the user's callback
+  /// to get the numerical correct value.
+  /// See [_callback] for more details.
   num _getValue({required Idx index}) {
-    if (_criteria == Criteria.content) {
+    if (_isContentCriteria) {
       return _heapStorage[index] as num;
     } else {
-      if (_callback != null) {
-        return _callback!(_heapStorage[index]);
-      } else {
-        throw Error();
-      }
+      return _callback!(_heapStorage[index]);
     }
   }
 
-  void insert(T element) {
+  /// Insert [element] at the end of internal list, and bubble up the node.
+  /// Since `2.0.0`, alias for the [enqueue] getter.
+  void insert(E element) {
+    enqueue(element);
+  }
+
+  /// Enqueue [element] at the end, and [_bubbleUp] the element.
+  ///
+  /// Since `2.0.0`, replace the [insert] method. They do the same.
+  void enqueue(E element) {
     _heapStorage.add(element);
     _bubbleUp(index: _last);
   }
 
-  T removeMin() {
-    late final T elementToBeRemoved;
+  /// Enqueue all elements of the [iterable] at the end,
+  /// and uses floyd's build heap algorithm, [_trickleDown] to adjust the heap.
+  void enqueueAll(Iterable<E> iterable) {
+    _heapStorage.addAll(iterable);
+    for (var i = _lastFather; i >= 0; i--) {
+      _trickleDown(index: i);
+    }
+  }
+
+  /// Remove the minimum value in the heap.
+  ///
+  /// Throws [Exception] if the heap [isEmpty].
+  ///
+  /// Since `2.0.0`, [removeMin] still working, but is alias for [dequeueMin].
+  E removeMin() {
+    return dequeueMin;
+  }
+
+  /// Dequeue the minimum value in the priority deque.
+  ///
+  /// Throws [Exception] if the heap [isEmpty].
+  ///
+  /// Since `2.0.0`, replace [removeMin] method. [removeMin] still working,
+  /// but is alias for this getter.
+  E get dequeueMin {
+    late final E elementToBeRemoved;
     switch (length) {
       case 0:
-        throw Exception('Empty heap');
+        throw StateError('Empty heap');
       case 1:
         elementToBeRemoved = _heapStorage[_root];
         _heapStorage.removeLast();
@@ -259,8 +350,32 @@ class MinMaxHeap<T extends Object> {
     return elementToBeRemoved;
   }
 
-  T removeMax() {
-    late final T elementToBeRemoved;
+  /// Equivalent to [dequeueMin] getter, but returns `null` if [isEmpty].
+  E? get tryDequeueMin {
+    try {
+      return dequeueMin;
+    } on StateError {
+      return null;
+    }
+  }
+
+  /// Remove the maximum element in the heap.
+  ///
+  /// Throws [Exception] if the heap [isEmpty].
+  ///
+  /// Since `2.0.0`, [removeMax] still working, but is alias for [dequeueMax].
+  E removeMax() {
+    return dequeueMax;
+  }
+
+  /// Dequeue the element with max priority in the heap.
+  ///
+  /// Throws [Exception] if the heap [isEmpty].
+  ///
+  /// Since `2.0.0`, replace [removeMax] method. [removeMax] still working,
+  /// but is alias for this getter.
+  E get dequeueMax {
+    late final E elementToBeRemoved;
     switch (length) {
       case 0:
         throw Exception('Empty heap');
@@ -280,35 +395,86 @@ class MinMaxHeap<T extends Object> {
     return elementToBeRemoved;
   }
 
-  T get min => switch (length) {
+  /// Equivalent to [dequeueMin] getter, but returns `null` if [isEmpty].
+  E? get tryDequeueMax {
+    try {
+      return dequeueMax;
+    } on StateError {
+      return null;
+    }
+  }
+
+  /// The min value of the heap.
+  ///
+  /// Throws [Exception] if the heap [isEmpty].
+  E get min => switch (length) {
         >= 1 => _heapStorage[_root],
-        _ => throw Exception('Empty heap')
+        _ => throw StateError('Empty heap')
       };
 
-  T get max => switch (length) {
+  E? get tryMin {
+    try {
+      return min;
+    } on StateError {
+      return null;
+    }
+  }
+
+  /// Gets the max value in the heap.
+  ///
+  /// Throws [Exception] if the [_heapStorage.isEmpty].
+  E get max => switch (length) {
         >= 3 => _getValue(index: 1) > _getValue(index: 2)
             ? _heapStorage[1]
             : _heapStorage[2],
         2 => _heapStorage[1],
         1 => _heapStorage[_root],
-        _ => throw Exception('Empty heap')
+        _ => throw StateError('Empty heap')
       };
 
-  void _printLevel({
+  E? get tryMax {
+    try {
+      return max;
+    } on StateError {
+      return null;
+    }
+  }
+
+  /// A map with the keys as levels of the heap, and value 
+  /// as an [List] with the elements presents in this level.
+  Map<int, List<E>> get asMapOfLevels => <int, List<E>>{
+        for (var level = 0; level <= depth; level++)
+          level: [
+            for (var i = (pow(2, level) - 1).toInt();
+                (i < pow(2, level + 1) - 1) && (i <= _last);
+                i++)
+              _heapStorage[i],
+          ],
+      };
+
+  /// Private helper to print elements in each [level].
+  ///
+  /// Can use a [_callback] to print user's defined value.
+  void _logLevel({
     required int level,
-    Object Function(T element)? callback,
+    Object Function(E element)? callback,
   }) {
-    print('Level $level - ${level.isEven ? 'min' : 'max'}: ${[
+    final logger = Logger('Heap levels');
+    logger.info('Level $level - ${level.isEven ? 'min' : 'max'}: ${[
       for (Idx i = (pow(2, level) - 1).toInt();
           (i < pow(2, level + 1) - 1) && (i <= _last);
           i++)
-        callback != null ? callback(_heapStorage[i]) : _heapStorage[i]
+        callback != null ? callback(_heapStorage[i]) : _heapStorage[i],
     ].join('|')}');
   }
 
-  void printTree({Object Function(T element)? criteria}) {
+  /// Prints a "tree" representation of the heap.
+  /// Is an approach to see elements in each level.
+  /// Can use a new custom [criteria] function to see the elements based on your preference.
+  /// Uses [_logLevel].
+  void logTree({Object Function(E element)? criteria}) {
     for (int i = 0; i <= depth; i++) {
-      _printLevel(level: i, callback: criteria);
+      _logLevel(level: i, callback: criteria);
     }
   }
 }
