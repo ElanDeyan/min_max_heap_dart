@@ -2,8 +2,6 @@ import 'dart:math' show log;
 
 typedef Idx = int;
 
-enum HeapLevel { min, max }
-
 bool isNumericalType(Object object) {
   if (object is Iterable) {
     return object is Iterable<num> ||

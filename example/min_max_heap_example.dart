@@ -3,8 +3,6 @@ import 'package:min_max_heap/min_max_heap.dart';
 
 import 'data.dart';
 
-typedef PriorityDeque<E extends Object> = MinMaxHeap<E>;
-
 final log = Logger('Example');
 
 void main(List<String> args) {
@@ -13,7 +11,7 @@ void main(List<String> args) {
     print('${event.level.name}: ${event.time.toLocal()}: ${event.message}');
   });
 
-  final PriorityDeque<Task> taskManager = PriorityDeque.fromIterable(
+  final MinMaxHeap<Task> taskManager = MinMaxHeap.fromIterable(
     iterable: tasks,
     criteria: (Task task) => task.timeToBeDone.inMilliseconds,
   );
@@ -22,9 +20,15 @@ void main(List<String> args) {
 
   log.info(taskManager.max);
 
-  taskManager.enqueueAll(const <Task>[
-    Task(name: 'log', timeToBeDone: Duration(milliseconds: 50)),
-    Task(name: 'heavy_operation', timeToBeDone: Duration(milliseconds: 1000)),
+  taskManager.addAll(<Task>[
+    Task(
+      name: 'log',
+      timeToBeDone: const Duration(milliseconds: 50),
+    ),
+    Task(
+      name: 'heavy_operation',
+      timeToBeDone: const Duration(milliseconds: 1000),
+    ),
   ]);
 
   log.info(taskManager.min);
@@ -37,12 +41,22 @@ void main(List<String> args) {
   //  1: [
   //        Task(name: heavy_operation, timeToBeDone: 1000),
   //        Task(name: sort_array, timeToBeDone: 300)
-  //     ], 
+  //     ],
   //  2: [
   //        Task(name: test_data, timeToBeDone: 250),
   //        Task(name: request_to_server, timeToBeDone: 500)
   //     ]
   // }
 
-  log.info(taskManager.sortedView(isAscendingOrder: false));
+  log.info(taskManager.sorted());
+
+  taskManager.updateWhere(
+    (element) => element.timeToBeDone.inMilliseconds < 200,
+    updater: (element) => Task(
+      name: 'Changed',
+      timeToBeDone: element.timeToBeDone,
+    ),
+  );
+
+  log.info(taskManager.min);
 }

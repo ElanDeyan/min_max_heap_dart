@@ -1,24 +1,25 @@
 final class Task {
   final Duration timeToBeDone;
-  final String name;
-  const Task({required this.name, required this.timeToBeDone});
+  String name;
+  Task({required this.name, required this.timeToBeDone});
 
   @override
-  String toString() => 'Task(name: $name, timeToBeDone: ${timeToBeDone.inMilliseconds})';
+  String toString() =>
+      'Task(name: $name, timeToBeDone: ${timeToBeDone.inMilliseconds})';
 }
 
-const tasks = <Task>[
+final tasks = <Task>[
   Task(
     name: 'test_data',
-    timeToBeDone: Duration(milliseconds: 250),
+    timeToBeDone: const Duration(milliseconds: 250),
   ),
   Task(
     name: 'request_to_server',
-    timeToBeDone: Duration(milliseconds: 500),
+    timeToBeDone: const Duration(milliseconds: 500),
   ),
   Task(
     name: 'sort_array',
-    timeToBeDone: Duration(milliseconds: 300),
+    timeToBeDone: const Duration(milliseconds: 300),
   ),
 ];
 

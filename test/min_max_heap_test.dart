@@ -17,7 +17,7 @@ void main() {
 
       expect(simpleHeap.length, 0);
 
-      simpleHeap.enqueueAll(dataToAdd);
+      simpleHeap.addAll(dataToAdd);
 
       expect(simpleHeap.isEmpty, false);
 
@@ -42,7 +42,7 @@ void main() {
       final stringDeque =
           PriorityDeque<String>(criteria: (word) => word.length);
 
-      stringDeque.enqueueAll(['a', 'ab', 'abc', 'abcd', 'abcde']);
+      stringDeque.addAll(['a', 'ab', 'abc', 'abcd', 'abcde']);
 
       expect(stringDeque.min.runtimeType, String);
 
@@ -65,7 +65,7 @@ void main() {
       test('Single enqueue', () {
         final doubleDeque = PriorityDeque<double>();
 
-        doubleDeque.enqueue(testData.first);
+        doubleDeque.add(testData.first);
 
         expect(doubleDeque.length, 1);
       });
@@ -73,22 +73,22 @@ void main() {
       test('More enqueues', () {
         final doubleDeque1 =
             PriorityDeque<double>.fromIterable(iterable: testData);
-        
+
         expect(doubleDeque1.length, 10);
-        
+
         final doubleDeque2 = PriorityDeque<double>();
-        
-        testData.forEach(doubleDeque2.enqueue);
+
+        testData.forEach(doubleDeque2.add);
 
         // Fun fact: build with sucessive enqueues will
         // create a different heap than using `fromIterable`
         // and `enqueueAll`.
         // But they will be valid heaps. Don't worry :).
         expect(doubleDeque2.length, 10);
-        
+
         final doubleDeque3 = PriorityDeque<double>();
 
-        doubleDeque3.enqueueAll(testData);
+        doubleDeque3.addAll(testData);
 
         expect(doubleDeque3.length, 10);
       });
