@@ -1,4 +1,5 @@
 /// Dart implementation of Min-max binary heap data structure.
+/// Supports generics.
 library min_max_heap;
 
 import 'dart:math' show pow;
@@ -6,26 +7,27 @@ import 'package:logging/logging.dart';
 
 import 'package:min_max_heap/src/min_max_heap_base.dart';
 
-/// A double-ended priority queue of `E` type.
+/// Min-max heap is a variation of the traditional binary heap, a 'double-ended priority queue',
+/// where the elements are organized following the 2 properties of a binary heaps:
 ///
-/// MinMax heap is a traditional binary heap, a 'double-ended priority queue',
-/// a priority queue where the elements are organized following the 2 properties of a binary heap:
-/// 1. Heap shape: All levels, except the last one, are fullfilleds with max elements on the respective level.
-/// 2. Min-Max heap condition: The levels alternate between Min and Max levels, where the nodes in min level are
+/// 1. Heap shape: All levels, except the last one, are fullfilleds with max elements as possible on the respective level.
+/// Example, as a "binary tree", level 0 has 1 element, since `pow(2, 0) == 1`. Level 1 has 2 elements at max, since `pow(2, 1) == 2`.
+/// 2. Min-max heap condition: The levels alternate between Min and Max levels, where the nodes in min level are
 /// less than all of his descendants (in your subtree), and in the max level, the max one in all of his descendants (in your subtree).
 ///
-/// The getters `min` and `max` has complexity O(1), and insertion, delete (in both extremes, min or max),
-/// have O(lg n)
+/// The getters `min` and `max` has complexity O(1), and insertion/add, remove (in both extremes, min or max),
+/// have O(lg n).
 ///
 /// This implementation supports generics, so you can store elements with any data type or class,
 /// since you follow the rules:
-/// 1. If your content has `num` type, int or double, you can, optionally, leave the callback parameter null.
-/// 2. Else you need to pass a callback function whicj return type is num.
 ///
-/// The heap will be balanced accordingly your content, if has num type and callback is null,
+/// 1. If your content has [num] type, [int] or [double], you can, optionally, leave the callback parameter [Null].
+/// 2. Else you need to pass a callback function which return type is [num].
+///
+/// The heap will be balanced accordingly your content, if has [num] type and callback is [Null],
 /// or based on the callback's result on the content.
 class MinMaxHeap<E extends Object> {
-  /// Build a min-max heap, a double-ended priority queue.
+  /// Build a Min-max binary heap, AKA double-ended priority queue.
   /// If [criteria] is equal to [Null], the content type of your [Iterable] should be a numeric type,
   /// like [int] or [double] or [num].
   /// Otherwise, your [criteria] callback [Function] should return a [num] type.
@@ -96,7 +98,7 @@ class MinMaxHeap<E extends Object> {
   List<E> get asList => iterable.toList();
 
   /// Returns a [List] with the elements sorted is ascending or descending order.
-  /// 
+  ///
   /// Default [isAscendingOrder].
   List<E> sorted({bool isAscendingOrder = true}) {
     final heapAsList = asList;
@@ -413,6 +415,22 @@ class MinMaxHeap<E extends Object> {
   E? get maxOrNull {
     try {
       return max;
+    } on StateError {
+      return null;
+    }
+  }
+
+  E get single {
+    if (length == 1) {
+      return _heapStorage[0];
+    } else {
+      throw StateError("The heap doesn't have only one element");
+    }
+  }
+
+  E? get singleOrNull {
+    try {
+      return single;
     } on StateError {
       return null;
     }

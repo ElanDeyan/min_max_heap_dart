@@ -1,9 +1,13 @@
+# Changelog
+
 ## 1.1.0
 
 - Initial published version.
 
 ## 2.0.0
+
 A great update is here! New getters and changes.
+
 - Major changes:
   - Constructor now doesn't have the input parameter. To build a heap from an iterable, use the factory constructor fromIterable.
   - Prefer the new alias, like enqueue and dequeue.
@@ -27,10 +31,16 @@ A great update is here! New getters and changes.
     - `sortedView`.
     - `enqueue`.
     - `enqueueAll`.
-    - 
   - Changes:
     - New factory constructor to build the heap from iterable.
     - `iterable`.
     - `listMode` now is `asList`.
     - Now the `Criteria` enum doesn't used anymore. A bool approach is used instead.
     - Improving doc comments.
+
+## 2.0.1
+
+- Renaming methods, like `enqueue*` and `dequeue*` to `add*` and backing to `remove*`.
+- New method `updateWhere`. This fix an issue at Github's repository.
+- Fixed `sorted` method
+- Some docs improvements.

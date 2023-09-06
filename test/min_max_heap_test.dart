@@ -1,99 +1,86 @@
-import 'dart:math';
-
 import 'package:min_max_heap/min_max_heap.dart';
 import 'package:test/test.dart';
-
-typedef PriorityDeque<E extends Object> = MinMaxHeap<E>;
+import './data.dart' show Task;
 
 void main() {
-  group('Storing lements', () {
-    final simpleHeap = PriorityDeque<int>();
-    final dataToAdd = [for (var i = 0; i < 5; i++) Random().nextInt(50)];
+  group("Adding elements", () {
+    const singleNumber = 32;
+    final oneElementHeap = MinMaxHeap<int>();
+    oneElementHeap.add(singleNumber);
 
-    test('Fullfiness of heap', () {
-      expect(simpleHeap.isEmpty, true);
+    final anotherOneElementHeap =
+        MinMaxHeap<int>.fromIterable(iterable: const [singleNumber]);
 
-      expect(simpleHeap.isNotEmpty, false);
+    test('Element was added?', () {
+      expect(oneElementHeap.length, 1);
+      expect(oneElementHeap.single, singleNumber);
 
-      expect(simpleHeap.length, 0);
-
-      simpleHeap.addAll(dataToAdd);
-
-      expect(simpleHeap.isEmpty, false);
-
-      expect(simpleHeap.isNotEmpty, true);
-
-      expect(simpleHeap.length, 5);
+      expect(anotherOneElementHeap.length, 1);
+      expect(anotherOneElementHeap.single, singleNumber);
     });
-  });
 
-  group('Adding data', () {
-    final dataToAdd = [for (var i = 0; i < 5; i++) Random().nextInt(50)];
-    test('Adding from iterable', () {
-      final anotherSimpleHeap = PriorityDeque<int>.fromIterable(
-        iterable: dataToAdd,
+    test('Adding ascending order', () {
+      final oneToTen = [for (var i = 0; i < 10; i++) i];
+      final ascendingHeap = MinMaxHeap<int>.fromIterable(iterable: oneToTen);
+
+      expect(ascendingHeap.min, 0);
+      expect(ascendingHeap.max, 9);
+
+      final newAscendingOrder = [
+        for (; ascendingHeap.isNotEmpty;) ascendingHeap.removeMin,
+      ];
+
+      expect(oneToTen, newAscendingOrder);
+    });
+
+    test('Adding in descending order', () {
+      final tenToOne = [for (var i = 9; i >= 0; i--) i];
+      final descendingHeap = MinMaxHeap<int>.fromIterable(iterable: tenToOne);
+
+      expect(descendingHeap.min, 0);
+      expect(descendingHeap.max, 9);
+
+      final newDescendingOrder = [
+        for (; descendingHeap.isNotEmpty;) descendingHeap.removeMax,
+      ];
+
+      expect(tenToOne, newDescendingOrder);
+    });
+
+    test('Adding another sample', () {
+      const sampleData = [5, 8, 2, 12, 1, 15, 4, 10, 7, 9];
+      final heap = MinMaxHeap<int>.fromIterable(iterable: sampleData);
+
+      expect(heap.length, sampleData.length);
+      expect(heap.min, 1);
+      expect(heap.max, 15);
+    });
+
+    test('Adding non-numeric data type', () {
+      final sample = [
+        Task('Sleep', priority: 5),
+        Task('Buy milk', priority: 1),
+        Task('Drink water', priority: 7),
+        Task('Study', priority: 5),
+      ];
+
+      final taskHeap = MinMaxHeap<Task>.fromIterable(
+        iterable: sample,
+        criteria: (task) => task.priority,
       );
-
-      expect(anotherSimpleHeap.isEmpty, false);
-      expect(anotherSimpleHeap.length, 5);
-    });
-
-    test('Non-numeric data', () {
-      final stringDeque =
-          PriorityDeque<String>(criteria: (word) => word.length);
-
-      stringDeque.addAll(['a', 'ab', 'abc', 'abcd', 'abcde']);
-
-      expect(stringDeque.min.runtimeType, String);
 
       expect(
-        stringDeque.min,
-        'a',
-        reason: 'The "a" string has the minimum length.',
+        taskHeap.min,
+        sample[1],
+        reason: 'Buy milk has less priority in this sample',
       );
       expect(
-        stringDeque.max,
-        'abcde',
-        reason: 'The "abcde" has the major length.',
+        taskHeap.max,
+        sample[2],
+        reason:
+            'Drink water has more priority in this sample.'
+            'Did you drink water today?',
       );
     });
-  });
-
-  group('Enqueue and dequeue', () {
-    final testData = [for (var i = 0; i < 10; i++) Random().nextDouble() * 10];
-    group('Enqueue', () {
-      test('Single enqueue', () {
-        final doubleDeque = PriorityDeque<double>();
-
-        doubleDeque.add(testData.first);
-
-        expect(doubleDeque.length, 1);
-      });
-
-      test('More enqueues', () {
-        final doubleDeque1 =
-            PriorityDeque<double>.fromIterable(iterable: testData);
-
-        expect(doubleDeque1.length, 10);
-
-        final doubleDeque2 = PriorityDeque<double>();
-
-        testData.forEach(doubleDeque2.add);
-
-        // Fun fact: build with sucessive enqueues will
-        // create a different heap than using `fromIterable`
-        // and `enqueueAll`.
-        // But they will be valid heaps. Don't worry :).
-        expect(doubleDeque2.length, 10);
-
-        final doubleDeque3 = PriorityDeque<double>();
-
-        doubleDeque3.addAll(testData);
-
-        expect(doubleDeque3.length, 10);
-      });
-    });
-
-    group('Dequeue', () => null);
   });
 }
