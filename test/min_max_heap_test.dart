@@ -202,7 +202,7 @@ void main() {
       }
 
       expect(heap.single, equals(10));
-      
+
       expect(heap.singleOrNull, equals(10));
     });
   });
@@ -224,5 +224,17 @@ void main() {
       // );
     },
   );
+
+  test('Clear', () {
+    final heap = MinMaxHeap<int>.fromIterable(iterable: oneToTen);
+
+    expect(heap.length, equals(10));
+
+    heap.clear();
+
+    expect(heap.length, equals(0));
+
+    expect(heap.isEmpty, isTrue);
+  });
   // });
 }

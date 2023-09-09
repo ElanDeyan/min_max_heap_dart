@@ -445,6 +445,10 @@ class MinMaxHeap<E extends Object> {
     }
   }
 
+  void clear() {
+    _heapStorage.clear();
+  }
+
   /// A [Map] with the keys as levels of the heap, and value
   /// as an [List] with the elements presents in this level.
   Map<int, List<E>> get asMapOfLevels => isNotEmpty
