@@ -33,10 +33,19 @@ class MinMaxHeap<E extends Object> {
   /// Otherwise, your [criteria] callback [Function] should return a [num] type.
   /// The heap will adjust based on this callback applyied on the element.
   MinMaxHeap({
+    Iterable<E>? input,
     num Function(E element)? criteria,
   })  : _callback = criteria,
         _isContentCriteria = criteria == null,
-        _heapStorage = <E>[];
+        _heapStorage = input?.toList() ?? <E>[] {
+    if (input != null) {
+      if (input.isNotEmpty) {
+        for (var i = _lastFather; i >= 0; i--) {
+          _trickleDown(index: i);
+        }
+      }
+    }
+  }
 
   /// Build a min-max heap, a double-ended priority queue, from an [Iterable].
   /// If [criteria] is equal to [Null], the content type of your [iterable] should be a numeric type,
@@ -323,7 +332,7 @@ class MinMaxHeap<E extends Object> {
   /// Remove the minimum value in the heap.
   ///
   /// Throws [StateError] if the heap [isEmpty].
-  E get removeMin {
+  E removeMin() {
     late final E elementToBeRemoved;
     switch (length) {
       case 0:
@@ -341,9 +350,9 @@ class MinMaxHeap<E extends Object> {
   }
 
   /// Equivalent to [removeMin] getter, but returns [Null] if [isEmpty].
-  E? get tryRemoveMin {
+  E? tryRemoveMin() {
     try {
-      return removeMin;
+      return removeMin();
     } on StateError {
       return null;
     }
@@ -352,7 +361,7 @@ class MinMaxHeap<E extends Object> {
   /// Remove the maximum element in the heap.
   ///
   /// Throws [StateError] if the heap [isEmpty].
-  E get removeMax {
+  E removeMax() {
     late final E elementToBeRemoved;
     switch (length) {
       case 0:
@@ -374,9 +383,9 @@ class MinMaxHeap<E extends Object> {
   }
 
   /// Equivalent to [removeMin] getter, but returns [Null] if [isEmpty].
-  E? get tryRemoveMax {
+  E? tryRemoveMax() {
     try {
-      return removeMax;
+      return removeMax();
     } on StateError {
       return null;
     }
@@ -438,15 +447,17 @@ class MinMaxHeap<E extends Object> {
 
   /// A [Map] with the keys as levels of the heap, and value
   /// as an [List] with the elements presents in this level.
-  Map<int, List<E>> get asMapOfLevels => <int, List<E>>{
-        for (var level = 0; level <= depth; level++)
-          level: [
-            for (var i = (pow(2, level) - 1).toInt();
-                (i < pow(2, level + 1) - 1) && (i <= _last);
-                i++)
-              _heapStorage[i],
-          ],
-      };
+  Map<int, List<E>> get asMapOfLevels => isNotEmpty
+      ? <int, List<E>>{
+          for (var level = 0; level <= depth; level++)
+            level: [
+              for (var i = (pow(2, level) - 1).toInt();
+                  (i < pow(2, level + 1) - 1) && (i <= _last);
+                  i++)
+                _heapStorage[i],
+            ],
+        }
+      : <int, List<E>>{};
 
   /// Update all elements with [updater] [Function] where the [predicate] is satisfied.
   /// Then calls [_trickleDown], Floyd's build heap algorithm, to adjust the heap.
