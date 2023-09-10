@@ -510,8 +510,9 @@ bool isValidMinMaxHeapListView(
   List<Object> list, [
   num Function(Object element)? criteria,
 ]) {
-  if (!isNumericalType(list) && criteria == null)
+  if (!isNumericalType(list) && criteria == null) {
     throw ArgumentError.notNull('Criteria');
+  }
   if (list.isEmpty) throw ArgumentError.value('Pass a non empty list.');
   if (list.length == 1) return true;
   if (list.length == 2) return criteria!(list.first) <= criteria(list.last);
