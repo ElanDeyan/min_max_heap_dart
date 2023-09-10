@@ -52,3 +52,7 @@ A great update is here! New getters and changes.
   - `isValidMinMaxHeapListView`
   - `getSubtreeOf`
 - New method `clear`, makes the heap empty.
+
+## 2.0.3
+
+- Fixing a hint to try achieve 140 pub points
