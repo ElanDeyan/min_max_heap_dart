@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:min_max_heap/min_max_heap.dart';
 import 'package:min_max_heap/src/min_max_heap_base.dart';
 import 'package:test/test.dart';
@@ -109,7 +111,7 @@ void main() {
 
     expect(heap.sorted().toList(), equals(oneToTen));
 
-    expect(heap.sorted(isAscendingOrder: false), equals(oneToTen.reversed));
+    expect(heap.sorted(inAscendingOrder: false), equals(oneToTen.reversed));
   });
 
   //   group('Removes', () {
@@ -207,23 +209,26 @@ void main() {
     });
   });
 
-  test(
-    'asMapOfLevels',
-    () {
-      final emptyHeap = MinMaxHeap<int>();
+  test('From a List, is a valid min-max heap?', () {
+    const testCase = <int>[1, 4, -5, 6, 7, 9, 3, 40, 20, 2, 70, 100];
 
-      expect(emptyHeap.asMapOfLevels, equals(<int, List<int>>{}));
+    expect(
+      getSubtreeOf(index: 1, atList: testCase),
+      equals(<int>[6, 7, 40, 20, 2, 70]),
+    );
 
-      final heap = MinMaxHeap.fromIterable(
-        iterable: [1, 4, -5, 6, 7, 9, 3, 40, 20, 2, 70, 100],
-      );
+    expect(isValidMinMaxHeapListView(testCase, (element) => element as int),
+        isFalse);
 
-      // expect(
-      //   heap.asMapOfLevels,
-      //   equals(<int, List<int>>{}),
-      // );
-    },
-  );
+    final heap = MinMaxHeap.fromIterable(
+      iterable: [for (var i = 0; i < 100; i++) Random().nextInt(100)],
+    );
+
+    expect(
+      isValidMinMaxHeapListView(heap.asList, (element) => element as int),
+      isTrue,
+    );
+  });
 
   test('Clear', () {
     final heap = MinMaxHeap<int>.fromIterable(iterable: oneToTen);
@@ -236,5 +241,37 @@ void main() {
 
     expect(heap.isEmpty, isTrue);
   });
-  // });
+
+  test('Compatibility constructor.', () {
+    final compatibilityConstructor =
+        MinMaxHeap<int>(input: [1, 2, 3, 4, 5, 6, 7, 8]);
+
+    final newConstructor =
+        MinMaxHeap<int>.fromIterable(iterable: [1, 2, 3, 4, 5, 6, 7, 8]);
+
+    expect(compatibilityConstructor.iterable, equals(newConstructor.iterable));
+  });
+
+  test('Add and insert methods equivalence', () {
+    final heap1 =
+        MinMaxHeap<int>.fromIterable(iterable: [1, 2, 3, 4, 5, 6, 7, 8]);
+    final heap2 =
+        MinMaxHeap<int>.fromIterable(iterable: [1, 2, 3, 4, 5, 6, 7, 8]);
+
+    heap1.add(-1);
+    heap2.insert(-1);
+
+    expect(heap1.min, equals(heap2.min));
+  });
+
+  test('updateWhere', () {
+    final heap = MinMaxHeap.fromIterable(iterable: oneToTen);
+
+    expect(heap.min, equals(1));
+
+    // This changes heap's priority.
+    heap.updateWhere((element) => element == 8, updater: (element) => -1);
+
+    expect(heap.min, equals(-1));
+  });
 }

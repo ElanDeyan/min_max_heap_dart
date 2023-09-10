@@ -44,3 +44,11 @@ A great update is here! New getters and changes.
 - New method `updateWhere`. This fix an issue at Github's repository.
 - Fixed `sorted` method
 - Some docs improvements.
+
+## 2.0.2
+
+- Better test coverage.
+- New functions
+  - `isValidMinMaxHeapListView`
+  - `getSubtreeOf`
+- New method `clear`, makes the heap empty.

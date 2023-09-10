@@ -12,6 +12,10 @@ bool isNumericalType(Object object) {
   }
 }
 
+/// Helper method to get the level type based on [index].
+/// Min levels are even numbers and max levels are odd numbers.
+bool isMinLevel({required Idx index}) => (index + 1).logBase2.floor().isEven;
+
 extension MathExtensions on num {
   num get logBase2 => log(this) / log(2);
 }

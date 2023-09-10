@@ -108,15 +108,15 @@ class MinMaxHeap<E extends Object> {
 
   /// Returns a [List] with the elements sorted is ascending or descending order.
   ///
-  /// Default [isAscendingOrder].
-  List<E> sorted({bool isAscendingOrder = true}) {
+  /// Default is [inAscendingOrder].
+  List<E> sorted({bool inAscendingOrder = true}) {
     final heapAsList = asList;
     if (_callback != null) {
       heapAsList.sort((a, b) => _callback!(a).compareTo(_callback!(b)));
     } else {
       heapAsList.sort((a, b) => (a as num).compareTo(b as num));
     }
-    return isAscendingOrder ? heapAsList : heapAsList.reversed.toList();
+    return inAscendingOrder ? heapAsList : heapAsList.reversed.toList();
   }
 
   /// Root's index.
@@ -138,13 +138,9 @@ class MinMaxHeap<E extends Object> {
         ),
       );
 
-  /// Helper method to get the level type based on [index].
-  /// Min levels are even numbers and max levels are odd numbers.
-  bool _isMinLevel({required Idx index}) => (index + 1).logBase2.floor().isEven;
-
   /// Checks the level type of [index] and calls [_trickleDownMin] or [_trickleDownMax], based on the level.
   void _trickleDown({required Idx index}) {
-    if (_isMinLevel(index: index)) {
+    if (isMinLevel(index: index)) {
       _trickleDownMin(index: index);
     } else {
       _trickleDownMax(index: index);
@@ -227,7 +223,7 @@ class MinMaxHeap<E extends Object> {
   /// respecting the heap condition.
   /// Essential in [insert] and [add] methods.
   void _bubbleUp({required Idx index}) {
-    if (_isMinLevel(index: index)) {
+    if (isMinLevel(index: index)) {
       if (_parentOf(index: index) >= _root) {
         if (_getValue(index: index) >
             _getValue(index: _parentOf(index: index))) {
@@ -504,4 +500,94 @@ class MinMaxHeap<E extends Object> {
       _logLevel(level: i, callback: criteria);
     }
   }
+}
+
+/// An utility function to check if an [list] is a valid
+/// list representation of a min-max heap.
+///
+/// Pass the callback [criteria] to the [Function] consider your criteria for this heap.
+bool isValidMinMaxHeapListView(
+  List<Object> list, [
+  num Function(Object element)? criteria,
+]) {
+  if (!isNumericalType(list) && criteria == null)
+    throw ArgumentError.notNull('Criteria');
+  if (list.isEmpty) throw ArgumentError.value('Pass a non empty list.');
+  if (list.length == 1) return true;
+  if (list.length == 2) return criteria!(list.first) <= criteria(list.last);
+
+  final [first, ...skippedFirst] = list;
+  for (final element in skippedFirst) {
+    if (criteria!(element) < criteria(first)) return false;
+  }
+
+  final [second, third, ...skippedThree] = skippedFirst;
+
+  final higher = criteria!(second) > criteria(third) ? second : third;
+  for (final element in skippedThree) {
+    if (criteria(element) > criteria(higher)) return false;
+  }
+
+  final lastFatherIndex = (skippedFirst.length - 1) ~/ 2;
+
+  for (var i = 0; i < lastFatherIndex; i++) {
+    final subtreeOfIndex = getSubtreeOf(index: i + 1, atList: list);
+    if (isMinLevel(index: i + 1)) {
+      if (criteria(skippedFirst[i]) >
+          criteria(
+            subtreeOfIndex.reduce(
+              (value, element) =>
+                  criteria(value) < criteria(element) ? value : element,
+            ),
+          )) {
+        return false;
+      }
+    } else {
+      if (criteria(skippedFirst[i]) <
+          criteria(
+            subtreeOfIndex.reduce(
+              (value, element) =>
+                  criteria(value) > criteria(element) ? value : element,
+            ),
+          )) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/// A utility [Function] to get an [Iterable] with all elements present
+/// in a subtree of an element at [index] in [atList].
+Iterable<Object> getSubtreeOf({
+  required int index,
+  required List<Object> atList,
+}) {
+  final lastParentIndex = (atList.length - 1) ~/ 2;
+  if (index > lastParentIndex) return <Object>[];
+
+  final deepestLevel = atList.length.logBase2.floor();
+  final levelOfIndex = (index + 1).logBase2.floor();
+  final maxChildrenPossibleInLastLevel = pow(2, deepestLevel) - 2;
+  var sumCoeficients = <int>[
+    for (var i = 1; i <= maxChildrenPossibleInLastLevel; i++) i,
+  ];
+  final levelsToPercur = deepestLevel - levelOfIndex;
+
+  final subtreeOfIndexes = <int>[];
+
+  for (var i = 1; i <= levelsToPercur; i++) {
+    subtreeOfIndexes.addAll(
+      sumCoeficients.take(pow(2, i).toInt()).map((e) {
+        return e + (pow(2, i).toInt() * index);
+      }),
+    );
+
+    sumCoeficients = sumCoeficients.skip(pow(2, i).toInt()).toList();
+  }
+
+  return subtreeOfIndexes
+      .where((element) => element <= atList.length - 1)
+      .map((e) => atList[e]);
 }
