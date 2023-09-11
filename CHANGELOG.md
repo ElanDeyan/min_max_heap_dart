@@ -56,3 +56,14 @@ A great update is here! New getters and changes.
 ## 2.0.3
 
 - Fixing a hint to try achieve 140 pub points
+
+## 2.1.0
+
+These update changes the signature of `updateWhere` method and release a `replaceWhere` method.
+
+- The `updateWhere` method now is `replaceWhere`.
+  - `replaceWhere`, as the name says, replace every element which predicate is satisfied.
+- A new funtion `updateWhere`.
+  - This function have change the signature. Now you should pass a void function.
+
+For more details, see `min_max_heap_test.dart` file.

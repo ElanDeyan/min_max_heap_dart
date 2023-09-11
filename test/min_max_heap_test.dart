@@ -264,14 +264,51 @@ void main() {
     expect(heap1.min, equals(heap2.min));
   });
 
-  test('updateWhere', () {
+  test('replaceWhere', () {
     final heap = MinMaxHeap.fromIterable(iterable: oneToTen);
 
     expect(heap.min, equals(1));
 
     // This changes heap's priority.
-    heap.updateWhere((element) => element == 8, updater: (element) => -1);
+    heap.replaceWhere((element) => element == 8, replacer: (element) => -1);
 
     expect(heap.min, equals(-1));
+  });
+
+  test('updateWhere', () {
+    final heap = MinMaxHeap.fromIterable(
+      iterable: <Task>[
+        Task('Drink water', priority: 5),
+        Task('Read', priority: 4),
+        Task('Morning walk', priority: 3),
+        Task("Review github's issues.", priority: 5),
+      ],
+      criteria: (element) => element.priority,
+    );
+
+    expect(heap.max.priority, equals(5));
+    
+    expect(heap.min.priority, equals(3));
+    expect(heap.min.name, equalsIgnoringCase('Morning walk'));
+
+    heap.updateWhere(
+      (element) => element.priority == 3 || element.priority == 5,
+      updater: (element) {
+        if (element.priority == 3) {
+          element.priority = 10;
+          element.name = 'Changed!';
+        }
+        if (element.priority == 5) {
+          element.priority = -1;
+          element.name = 'Another change!';
+        }
+      },
+    );
+
+    expect(heap.min.priority, equals(-1));
+    expect(heap.min.name, equalsIgnoringCase('Another change!'));
+
+    expect(heap.max.priority, equals(10));
+    expect(heap.max.name, equalsIgnoringCase("Changed!"));
   });
 }

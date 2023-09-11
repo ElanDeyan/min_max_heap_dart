@@ -50,10 +50,10 @@ void main(List<String> args) {
 
   log.info(taskManager.sorted());
 
-  taskManager.updateWhere(
+  taskManager.replaceWhere(
     (element) => element.timeToBeDone.inMilliseconds < 200,
-    updater: (element) => Task(
-      name: 'Changed',
+    replacer: (element) => Task(
+      name: 'Replaced',
       timeToBeDone: element.timeToBeDone,
     ),
   );

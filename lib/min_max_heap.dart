@@ -463,11 +463,27 @@ class MinMaxHeap<E extends Object> {
   /// Then calls [_trickleDown], Floyd's build heap algorithm, to adjust the heap.
   void updateWhere(
     bool Function(E element) predicate, {
-    required E Function(E element) updater,
+    required void Function(E element) updater,
   }) {
     for (var i = 0; i < length; i++) {
       if (predicate(_heapStorage[i])) {
-        _heapStorage[i] = updater(_heapStorage[i]);
+        updater(_heapStorage[i]);
+      }
+    }
+    for (var i = _lastFather; i >= 0; i--) {
+      _trickleDown(index: i);
+    }
+  }
+
+  /// Replace all elements with [replacer] [Function] where the [predicate] is satisfied.
+  /// Then calls [_trickleDown], Floyd's build heap algorithm, to adjust the heap.
+  void replaceWhere(
+    bool Function(E element) predicate, {
+    required E Function(E element) replacer,
+  }) {
+    for (var i = 0; i < length; i++) {
+      if (predicate(_heapStorage[i])) {
+        _heapStorage[i] = replacer(_heapStorage[i]);
       }
     }
     for (var i = _lastFather; i >= 0; i--) {
